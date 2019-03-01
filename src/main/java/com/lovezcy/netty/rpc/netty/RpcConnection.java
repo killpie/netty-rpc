@@ -1,6 +1,10 @@
 package com.lovezcy.netty.rpc.netty;
 
+import com.lovezcy.netty.rpc.async.ResponseCallbackListener;
 import com.lovezcy.netty.rpc.model.RpcRequest;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  *描述与服务器的连接
@@ -16,5 +20,9 @@ public interface RpcConnection {
     boolean isClose();
     boolean isConnected();
     public boolean containsFuture(String key);
-
+    public InvokeFuture<Object> removeFuture(String key);
+    public void setResult(Object result);
+    public void setTimeOut(long timeOut);
+    public void setAsyncMethod(Map<String, ResponseCallbackListener> map);
+    public List<ResultFuture> getFutures(String method);
 }
