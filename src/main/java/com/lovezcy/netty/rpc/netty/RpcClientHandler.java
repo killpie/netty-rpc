@@ -5,7 +5,6 @@ import com.lovezcy.netty.rpc.model.RpcResponse;
 import com.lovezcy.netty.rpc.tool.ByteObjConverter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

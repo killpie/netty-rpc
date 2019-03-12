@@ -1,5 +1,7 @@
-package com.lovezcy.netty.rpc.model;
+package com.lovezcy.netty.rpc.model.protocol;
 
+import com.lovezcy.netty.rpc.constant.DatagramFormatEnum;
+import com.lovezcy.netty.rpc.model.Packet;
 import lombok.Data;
 
 
@@ -11,7 +13,7 @@ import java.util.Map;
  * @date 2019/2/20 10:33
  **/
 @Data
-public class RpcRequest implements Serializable {
+public class RpcRequest extends Packet implements Serializable {
     private static final long serialVersionUID = 5606111910428846773L;
 
     private String requestId;
@@ -20,6 +22,10 @@ public class RpcRequest implements Serializable {
     private Class<?> parameterTypes;
     private Object[] parameters;
     private Map<String,Object> context;
+
+    public byte getCommand(){
+        return DatagramFormatEnum.RPC_REQUEST.getKey();
+    }
 
 
 }

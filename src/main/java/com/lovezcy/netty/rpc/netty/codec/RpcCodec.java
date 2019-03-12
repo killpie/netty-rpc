@@ -1,96 +1,53 @@
 package com.lovezcy.netty.rpc.netty.codec;
 
-import com.lovezcy.netty.rpc.model.RpcRequest;
-import com.lovezcy.netty.rpc.model.RpcResponse;
+
+import com.lovezcy.netty.rpc.constant.DatagramFormatEnum;
+import com.lovezcy.netty.rpc.model.Packet;
+import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
+import com.lovezcy.netty.rpc.model.protocol.RpcResponse;
 import com.lovezcy.netty.rpc.tool.Tool;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 编码解码器
  * @author dingzhaolei
  * @date 2019/3/5 16:13
  **/
-public class RpcCodec extends MessageToMessageCodec<ByteBuf,Object> {
-    private static Object enResponseCacheName = null;
-    private static byte[] enResponseCacheValue = null;
-    private static Object enRequestCacheName = null;
-    private static byte[] enRequestCacheValue = null;
+@Slf4j
+public class RpcCodec extends MessageToMessageCodec<ByteBuf, Packet> {
 
-    private static byte[] deRequestCacheName=null;
-    private static RpcRequest deRequestCacheValue=null;
-    private static byte[] deResponseCacheName=null;
-    private static RpcResponse deResponseCacheValue=null;
+    public static final int MAGIC_NUMBER = 0x123456;
+    //int 类型所占字节长度
+    public static final int INTEGER_LENGTH = 4;
+    public static final int BYTE_LENGTH = 1;
+    private static final Map<Byte, Class<? extends Packet>> packetTypeMap;
 
-    private Class<?> genericClass;
-
-    public RpcCodec(Class<?> genericClass){
-        this.genericClass = genericClass;
+    static {
+        packetTypeMap = new HashMap<>();
+        packetTypeMap.put(DatagramFormatEnum.RPC_REQUEST.getKey(), RpcRequest.class);
+        packetTypeMap.put(DatagramFormatEnum.RPC_RESPONSE.getKey(), RpcResponse.class);
+    }
+    public RpcCodec(){
     }
 
 
     @Override
-    protected  void encode(ChannelHandlerContext ctx, Object msg, List<Object> out)
+    protected  void encode(ChannelHandlerContext ctx, Packet packet, List<Object> out)
             throws Exception{
+        log.info("ctx:{},packet:{},out:{}",ctx.channel().id());
         ByteBuf byteBuf = ctx.alloc().ioBuffer();
+        byte[] body = Tool.serialize(packet);
 
-        if (genericClass.equals(RpcResponse.class)){
-            //先查缓存
-            RpcResponse response = (RpcResponse)msg;
-            String requestId = response.getRequestId();
-
-            response.setRequestId("");
-            byte[] requestIdByte = requestId.getBytes();
-            byte[] body = null;
-
-            if (enResponseCacheName!=null && enResponseCacheName.equals(response)){
-                body = enResponseCacheValue;
-            }else {
-                body = Tool.serialize(msg);
-                enResponseCacheName = response;
-                enResponseCacheValue = body;
-            }
-            // [|总长度||requestId长度||request字节内容||响应内容|]
-            int totalLen = 4+4+requestIdByte.length+body.length;
-            byteBuf.writeInt(totalLen);
-            byteBuf.writeInt(requestIdByte.length);
-            byteBuf.writeBytes(requestIdByte);
-            byteBuf.writeBytes(body);
-            out.add(byteBuf);
-            return;
-        }
-
-        if (genericClass.equals(RpcRequest.class)){
-            //先查缓存
-            RpcRequest request = (RpcRequest)msg;
-            String requestId = request.getRequestId();
-
-            request.setRequestId("");
-            byte[] requestIdByte = requestId.getBytes();
-            byte[] body = null;
-
-            if (enRequestCacheName!=null && enRequestCacheName.equals(request)){
-                body = enRequestCacheValue;
-            }else {
-                body = Tool.serialize(msg);
-                enRequestCacheName = request;
-                enRequestCacheValue = body;
-            }
-
-            // [|总长度||requestId长度||request字节内容||响应内容|]
-            int totalLen = 4+4+requestIdByte.length+body.length;
-            byteBuf.writeInt(totalLen);
-            byteBuf.writeInt(requestIdByte.length);
-            byteBuf.writeBytes(requestIdByte);
-            byteBuf.writeBytes(body);
-            out.add(byteBuf);
-            return;
-        }
-
-        byte[] body = Tool.serialize(msg);
+        byteBuf.writeInt(MAGIC_NUMBER);
+        byteBuf.writeByte(packet.getVersion());
+        byteBuf.writeByte(packet.getCommand());
         byteBuf.writeInt(body.length);
         byteBuf.writeBytes(body);
         out.add(byteBuf);
@@ -98,128 +55,18 @@ public class RpcCodec extends MessageToMessageCodec<ByteBuf,Object> {
 
 
     @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out)
+    protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out)
             throws Exception{
-        int HEAD_LENGTH=4;
-        if (in.readableBytes() < HEAD_LENGTH) {
-            return;
-        }
-        in.markReaderIndex();
-        int dataLength = in.readInt();
-        if (dataLength < 0) {
-            ctx.close();
-        }
-        if (in.readableBytes() < dataLength) {
-            in.resetReaderIndex();
-            return;
-        }
+        byteBuf.skipBytes(INTEGER_LENGTH);
+        byte version = byteBuf.readByte();
+        byte command = byteBuf.readByte();
 
-        if(genericClass.equals(RpcResponse.class)) {
-            int requestIdLength=in.readInt();//获取到requestId的长度
-
-            byte[] requestIdBytes=new byte[requestIdLength];
-            in.readBytes(requestIdBytes);
-
-            int bodyLength=dataLength-4-requestIdLength;
-
-            byte[] body = new byte[bodyLength];
-            in.readBytes(body);
-            String requestId=new String(requestIdBytes);
-
-            if(deResponseCacheName!=null&&cacheEqual(deResponseCacheName,body)) {
-                RpcResponse obj=new RpcResponse();
-                obj.setRequestId(requestId);
-                obj.setAppResponse(deResponseCacheValue.getAppResponse());
-                obj.setClazz(deResponseCacheValue.getClazz());
-                obj.setException(deResponseCacheValue.getException());
-                out.add(obj);
-            }
-            else {
-                RpcResponse obj=(RpcResponse) Tool.deserialize(body, genericClass);
-                obj.setRequestId(requestId);//设置requestId
-                out.add(obj);
-
-                deResponseCacheName=body;
-                deResponseCacheValue=new RpcResponse();
-                deResponseCacheValue.setAppResponse(obj.getAppResponse());
-                deResponseCacheValue.setClazz(obj.getClazz());
-                deResponseCacheValue.setException(obj.getException());
-
-            }
-        }
-        else if(genericClass.equals(RpcRequest.class))
-        {
-            int requestIdLength=in.readInt();//获取到requestId的长度
-
-            byte[] requestIdBytes=new byte[requestIdLength];
-            in.readBytes(requestIdBytes);
-
-            int bodyLength=dataLength-4-requestIdLength;
-
-            byte[] body = new byte[bodyLength];
-            in.readBytes(body);
-            String requestId=new String(requestIdBytes);
-
-            if(deRequestCacheName!=null&&cacheEqual(deRequestCacheName,body))
-            {
-                RpcRequest obj=new RpcRequest();
-                obj.setClassName(deRequestCacheValue.getClassName());
-                obj.setContext(deRequestCacheValue.getContext());
-                obj.setMethodName(deRequestCacheValue.getMethodName());
-                obj.setParameters(deRequestCacheValue.getParameters());
-                obj.setParameterTypes(deRequestCacheValue.getParameterTypes());
-                obj.setRequestId(requestId);
-
-                out.add(obj);
-
-            }
-            else
-            {
-                RpcRequest obj=(RpcRequest) Tool.deserialize(body, genericClass);
-                obj.setRequestId(requestId);//设置requestId
-                out.add(obj);
-
-                deRequestCacheName=body;
-                deRequestCacheValue=new RpcRequest();
-                deRequestCacheValue.setClassName(obj.getClassName());
-                deRequestCacheValue.setContext(obj.getContext());
-                deRequestCacheValue.setMethodName(obj.getMethodName());
-                deRequestCacheValue.setParameters(obj.getParameters());
-                deRequestCacheValue.setParameterTypes(obj.getParameterTypes());
-            }
-        }
-        else
-        {
-            byte[] body = new byte[dataLength];
-            in.readBytes(body);
-            Object obj=Tool.deserialize(body, genericClass);
-            out.add(obj);
-        }
+        int bodyLen = byteBuf.readInt();
+        byte[] bodyBytes = new byte[bodyLen];
+        byteBuf.readBytes(bodyBytes);
+        Class clazz = packetTypeMap.get(command);
+        Object o = Tool.deserialize(bodyBytes,clazz);
+        out.add(o);
     }
-
-
-    private static boolean cacheEqual(byte[] data1,byte[] data2)
-    {
-        if(data1==null)
-        {
-            if(data2!=null)
-                return false;
-        }
-        else
-        {
-            if(data2==null)
-                return false;
-
-            if(data1.length!=data2.length)
-                return false;
-
-            for (int i = 0; i < data1.length; i++) {
-                if(data1[i]!=data2[i])
-                    return false;
-            }
-        }
-        return true;
-    }
-
 
 }
