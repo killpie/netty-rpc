@@ -7,6 +7,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 /**
  * @author killpie
  * @date 2019/3/12 17:27
+ * 每个 Spliter 需要维持每个 channel 当前读到的数据，也就是说他是有状态的，不能被共享
  **/
 public class Spliter extends LengthFieldBasedFrameDecoder {
     private static final int LENGTH_FIELD_OFFSET = 6;

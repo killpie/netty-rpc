@@ -1,6 +1,7 @@
 package com.lovezcy.netty.rpc.aop;
 
-import com.lovezcy.netty.rpc.model.RpcRequest;
+
+import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
 
 /**
  * @author dingzhaolei

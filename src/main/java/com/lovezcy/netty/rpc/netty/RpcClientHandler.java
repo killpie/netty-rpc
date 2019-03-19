@@ -1,7 +1,7 @@
 package com.lovezcy.netty.rpc.netty;
 
 import com.lovezcy.netty.rpc.async.ResponseCallbackListener;
-import com.lovezcy.netty.rpc.model.RpcResponse;
+import com.lovezcy.netty.rpc.model.protocol.RpcResponse;
 import com.lovezcy.netty.rpc.tool.ByteObjConverter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

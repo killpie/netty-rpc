@@ -1,7 +1,7 @@
 package com.lovezcy.netty.rpc.netty;
 
 import com.lovezcy.netty.rpc.async.ResponseCallbackListener;
-import com.lovezcy.netty.rpc.model.RpcRequest;
+import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +15,7 @@ public interface RpcConnection {
     void init();
     void connect();
     void connect(String host, int port);
-    Object send(RpcRequest request,boolean async);
+    Object send(RpcRequest request, boolean async);
     void close();
     boolean isClose();
     boolean isConnected();

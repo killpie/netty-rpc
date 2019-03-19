@@ -1,11 +1,13 @@
 package com.lovezcy.netty.rpc.netty.impl;
 
 import com.lovezcy.netty.rpc.async.ResponseCallbackListener;
-import com.lovezcy.netty.rpc.model.RpcRequest;
+import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
 import com.lovezcy.netty.rpc.netty.InvokeFuture;
 import com.lovezcy.netty.rpc.netty.ResultFuture;
 import com.lovezcy.netty.rpc.netty.RpcClientHandler;
 import com.lovezcy.netty.rpc.netty.RpcConnection;
+import com.lovezcy.netty.rpc.netty.codec.RpcCodec;
+import com.lovezcy.netty.rpc.netty.codec.Spliter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -61,6 +63,8 @@ public class RpcNettyConnection implements RpcConnection {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel channel){
+                            channel.pipeline().addLast(new Spliter());
+                            channel.pipeline().addLast(new RpcCodec());
                         }
                     });
         }catch (Exception e){

@@ -7,6 +7,7 @@ import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
 import com.lovezcy.netty.rpc.model.protocol.RpcResponse;
 import com.lovezcy.netty.rpc.tool.Tool;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.Map;
  * @date 2019/3/5 16:13
  **/
 @Slf4j
+@ChannelHandler.Sharable
 public class RpcCodec extends MessageToMessageCodec<ByteBuf, Packet> {
 
     public static final int MAGIC_NUMBER = 0x123456;
