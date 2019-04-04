@@ -13,7 +13,8 @@ import java.io.Serializable;
 @Data
 public class RpcResponse extends Packet implements Serializable {
     private static final long serialVersionUID = -3888703143177777864L;
-
+    private String appId;
+    private String token;
     private String requestId;
     private byte[] exception;
     private Throwable errorMsg;

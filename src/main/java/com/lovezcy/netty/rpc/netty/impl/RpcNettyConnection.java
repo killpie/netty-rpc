@@ -9,13 +9,14 @@ import com.lovezcy.netty.rpc.netty.RpcConnection;
 import com.lovezcy.netty.rpc.netty.codec.RpcCodec;
 import com.lovezcy.netty.rpc.netty.codec.Spliter;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.PlatformDependent;
+import io.netty.util.internal.StringUtil;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -65,25 +66,63 @@ public class RpcNettyConnection implements RpcConnection {
                         public void initChannel(SocketChannel channel){
                             channel.pipeline().addLast(new Spliter());
                             channel.pipeline().addLast(new RpcCodec());
+                            channel.pipeline().addLast(handler);
                         }
-                    });
+                    }).option(ChannelOption.SO_KEEPALIVE,true);
         }catch (Exception e){
-
+            e.printStackTrace();
         }
     }
 
     @Override
     public void connect() {
-
+        try {
+            ChannelFuture future = bootstrap.connect(this.inetSocketAddress).sync();
+            Channel channel = future.channel();
+            channelMap.put(this.inetSocketAddress.toString(),channel);
+            connected = true;
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void connect(String host, int port) {
-
+        this.inetSocketAddress = new InetSocketAddress(host,port);
+        ChannelFuture future = bootstrap.connect(inetSocketAddress);
+        future.addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                Channel channel = future.channel();
+                channelMap.put(channel.remoteAddress().toString(),channel);
+            }
+        });
     }
 
     @Override
-    public Object send(RpcRequest request, boolean async) {
+    public Object send(RpcRequest request, boolean async) throws Exception{
+        if (request == null || StringUtil.isNullOrEmpty(request.getClassName())|| StringUtil.isNullOrEmpty(request.getMethodName())){
+            throw new Exception("request must not be null");
+        }
+
+        if (channel == null){
+            channel = channelMap.get(this.inetSocketAddress.toString());
+            if (channel!=null){
+                final InvokeFuture<Object> future = new InvokeFuture<>();
+                future.setMethod(request.getMethodName());
+                futureMap.put(request.getRequestId(),future);
+
+                ChannelFuture channelFuture = channel.writeAndFlush(request);
+                channelFuture.addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture cfuture) throws Exception {
+                        if (!cfuture.isSuccess()){
+                            future.setCause(cfuture.cause());
+                        }
+                    }
+                });
+            }
+        }
         return null;
     }
 

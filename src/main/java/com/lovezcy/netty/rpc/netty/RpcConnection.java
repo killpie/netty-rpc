@@ -15,7 +15,7 @@ public interface RpcConnection {
     void init();
     void connect();
     void connect(String host, int port);
-    Object send(RpcRequest request, boolean async);
+    Object send(RpcRequest request, boolean async) throws Exception;
     void close();
     boolean isClose();
     boolean isConnected();

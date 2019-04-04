@@ -17,6 +17,7 @@ public class Spliter extends LengthFieldBasedFrameDecoder {
         super(Integer.MAX_VALUE, LENGTH_FIELD_OFFSET, LENGTH_FIELD_LENGTH);
     }
 
+    @Override
     protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
         //屏蔽非本协议的客户端
         if (in.getInt(in.readerIndex()) != RpcCodec.MAGIC_NUMBER){

@@ -147,8 +147,9 @@ public abstract class AbstractLRUMap<K,V> implements Map<K,V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> source) {
-        if (source == null)
+        if (source == null){
             return;
+        }
         for (Map.Entry<? extends K, ? extends V> entry:source.entrySet()
              ) {
             put(entry.getKey(),entry.getValue());

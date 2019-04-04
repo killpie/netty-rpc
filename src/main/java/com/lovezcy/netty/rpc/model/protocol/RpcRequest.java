@@ -16,6 +16,8 @@ import java.util.Map;
 public class RpcRequest extends Packet implements Serializable {
     private static final long serialVersionUID = 5606111910428846773L;
 
+    private String appId;
+    private String token;
     private String requestId;
     private String className;
     private String methodName;
@@ -23,6 +25,7 @@ public class RpcRequest extends Packet implements Serializable {
     private Object[] parameters;
     private Map<String,Object> context;
 
+    @Override
     public byte getCommand(){
         return DatagramFormatEnum.RPC_REQUEST.getKey();
     }
