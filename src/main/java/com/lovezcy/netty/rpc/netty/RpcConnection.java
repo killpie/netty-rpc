@@ -24,5 +24,5 @@ public interface RpcConnection {
     public void setResult(Object result);
     public void setTimeOut(long timeOut);
     public void setAsyncMethod(Map<String, ResponseCallbackListener> map);
-    public List<ResultFuture> getFutures(String method);
+    public List<InvokeFuture<Object>> getFutures(String method);
 }

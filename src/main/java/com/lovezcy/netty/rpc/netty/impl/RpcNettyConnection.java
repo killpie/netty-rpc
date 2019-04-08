@@ -1,7 +1,9 @@
 package com.lovezcy.netty.rpc.netty.impl;
 
 import com.lovezcy.netty.rpc.async.ResponseCallbackListener;
+import com.lovezcy.netty.rpc.async.ResponseFuture;
 import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
+import com.lovezcy.netty.rpc.model.protocol.RpcResponse;
 import com.lovezcy.netty.rpc.netty.InvokeFuture;
 import com.lovezcy.netty.rpc.netty.ResultFuture;
 import com.lovezcy.netty.rpc.netty.RpcClientHandler;
@@ -13,15 +15,16 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.StringUtil;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * rpc连接的具体实现
@@ -121,6 +124,25 @@ public class RpcNettyConnection implements RpcConnection {
                         }
                     }
                 });
+                resultFuture = new ResultFuture<>(timeOut);
+                resultFuture.setRequestId(request.getRequestId());
+                try {
+                    if (async){
+                        //异步直接返回
+                        ResponseFuture.setFuture(resultFuture);
+                        return null;
+                    }else {
+                        Object result = future.getResult(timeOut, TimeUnit.MILLISECONDS);
+                        return request;
+                    }
+                }catch (RuntimeException e){
+                    throw e;
+                }finally {
+                    if (!async){
+                        //非异步已收到结果
+                        futureMap.remove(request.getRequestId());
+                    }
+                }
             }
         }
         return null;
@@ -128,46 +150,67 @@ public class RpcNettyConnection implements RpcConnection {
 
     @Override
     public void close() {
-
+        if (channel!=null){
+            try{
+                channel.closeFuture().sync();
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public boolean isClose() {
-        return false;
+        return null == channel || !channel.isOpen() || !channel.isWritable() || !channel.isActive();
     }
 
     @Override
     public boolean isConnected() {
-        return false;
+        return connected;
     }
 
     @Override
     public boolean containsFuture(String key) {
-        return false;
+        return futureMap.containsKey(key);
     }
 
     @Override
     public InvokeFuture<Object> removeFuture(String key) {
-        return null;
+        return futureMap.remove(key);
     }
 
     @Override
     public void setResult(Object result) {
-
+        RpcResponse response = (RpcResponse)result;
+        if (resultFuture.getRequestId().equals(response.getRequestId())){
+            resultFuture.setResult(response);
+        }
     }
 
     @Override
     public void setTimeOut(long timeOut) {
-
+        this.timeOut = timeOut;
     }
 
     @Override
     public void setAsyncMethod(Map<String, ResponseCallbackListener> map) {
-
+        handler.setAsynMethod(map);
     }
 
     @Override
-    public List<ResultFuture> getFutures(String method) {
-        return null;
+    public List<InvokeFuture<Object>> getFutures(String method) {
+        List<InvokeFuture<Object>> list = new ArrayList<>();
+        Iterator<Map.Entry<String, InvokeFuture<Object>>> iterable = futureMap.entrySet().iterator();
+
+        while (iterable.hasNext()){
+            Map.Entry<String,InvokeFuture<Object>> entry = iterable.next();
+            String methodName = entry.getValue().getMethod();
+            InvokeFuture<Object> temp = entry.getValue();
+
+            if (!StringUtil.isNullOrEmpty(methodName) || methodName.equals(method) || temp != null){
+                list.add(temp);
+            }
+        }
+        return list;
     }
 }
