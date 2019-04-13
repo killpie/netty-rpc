@@ -44,7 +44,8 @@ public class RpcConsumer implements InvocationHandler {
     }
 
     /**
-     * 消费者设置优先（在生产者和消费者中同时设置超时时间（防止由于网络等原因造成的堵塞），消费者设置的超时时间生效）
+     * 消费者设置优先（在生产者和消费者中同时设置超时时间（防止由于网络等原因造成的堵塞），
+     * 消费者设置的超时时间生效）
      * @param clientTimeout
      * @return
      */

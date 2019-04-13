@@ -3,6 +3,7 @@ package com.lovezcy.netty.rpc.context;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * rpc上下文
@@ -10,7 +11,7 @@ import java.util.Map;
  * @date 2019/4/8 15:11
  **/
 public class RpcContext {
-    private static Map<String,Object> props = new HashMap<>();
+    private static Map<String,Object> props = new ConcurrentHashMap<>();
 
     public static void addProp(String key ,Object value){
         props.put(key,value);

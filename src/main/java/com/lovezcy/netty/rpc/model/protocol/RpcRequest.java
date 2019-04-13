@@ -21,7 +21,7 @@ public class RpcRequest extends Packet implements Serializable {
     private String requestId;
     private String className;
     private String methodName;
-    private Class<?> parameterTypes;
+    private Class<?>[] parameterTypes;
     private Object[] parameters;
     private Map<String,Object> context;
 

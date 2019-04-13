@@ -19,6 +19,7 @@ public class RpcResponse extends Packet implements Serializable {
     private byte[] exception;
     private Throwable errorMsg;
     private Object appResponse;
+    private Class<?> clazz;
 
     @Override
     public byte getCommand() {
