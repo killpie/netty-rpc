@@ -2,6 +2,7 @@ package com.lovezcy.netty.rpc.api.impl;
 
 import com.lovezcy.netty.rpc.api.RpcProvider;
 import com.lovezcy.netty.rpc.netty.codec.RpcCodec;
+import com.lovezcy.netty.rpc.netty.codec.Spliter;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -90,6 +91,7 @@ public class RpcProviderImpl extends RpcProvider {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new Spliter());
                         ch.pipeline().addLast(new RpcCodec());
                         ch.pipeline().addLast(new RpcRequestHandler(handlerMap));
                     }
