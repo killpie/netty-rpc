@@ -43,7 +43,7 @@ public class RpcCodec extends MessageToMessageCodec<ByteBuf, Packet> {
     @Override
     protected  void encode(ChannelHandlerContext ctx, Packet packet, List<Object> out)
             throws Exception{
-        log.info("ctx:{},packet:{},out:{}",ctx.channel().id());
+        log.info("RpcCodec.encode ctx:{},packet:{}",ctx.channel().id(),packet);
         ByteBuf byteBuf = ctx.alloc().ioBuffer();
         byte[] body = Tool.serialize(packet);
 
@@ -59,6 +59,7 @@ public class RpcCodec extends MessageToMessageCodec<ByteBuf, Packet> {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out)
             throws Exception{
+        log.info("RpcCodec.decode ctx:{},byteBuf:{}",ctx.channel().id(),byteBuf);
         byteBuf.skipBytes(INTEGER_LENGTH);
         byte version = byteBuf.readByte();
         byte command = byteBuf.readByte();

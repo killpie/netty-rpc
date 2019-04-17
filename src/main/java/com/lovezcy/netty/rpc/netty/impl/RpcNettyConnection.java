@@ -17,6 +17,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * @author dingzhaolei
  * @date 2019/3/1 13:34
  **/
+@Slf4j
 public class RpcNettyConnection implements RpcConnection {
     private InetSocketAddress inetSocketAddress;
     private volatile Channel channel;
@@ -51,6 +53,7 @@ public class RpcNettyConnection implements RpcConnection {
     public RpcNettyConnection(String host, int port){
         inetSocketAddress = new InetSocketAddress(host,port);
         handler = new RpcClientHandler(this);
+        init();
     }
 
     public Channel getChannel(String key){
@@ -104,6 +107,7 @@ public class RpcNettyConnection implements RpcConnection {
 
     @Override
     public Object send(RpcRequest request, boolean async) throws Exception{
+        log.info("RpcNettyConnection.send requestId:{},request:{}",request.getRequestId(),request);
         if (request == null || StringUtil.isNullOrEmpty(request.getClassName())|| StringUtil.isNullOrEmpty(request.getMethodName())){
             throw new Exception("request must not be null");
         }
@@ -121,6 +125,7 @@ public class RpcNettyConnection implements RpcConnection {
                     public void operationComplete(ChannelFuture cfuture) throws Exception {
                         if (!cfuture.isSuccess()){
                             future.setCause(cfuture.cause());
+                            cfuture.cause().printStackTrace();
                         }
                     }
                 });
@@ -132,8 +137,9 @@ public class RpcNettyConnection implements RpcConnection {
                         ResponseFuture.setFuture(resultFuture);
                         return null;
                     }else {
+                        log.info("RpcNettyConnection.send timeOut:{}",timeOut);
                         Object result = future.getResult(timeOut, TimeUnit.MILLISECONDS);
-                        return request;
+                        return result;
                     }
                 }catch (RuntimeException e){
                     throw e;
@@ -182,7 +188,9 @@ public class RpcNettyConnection implements RpcConnection {
     @Override
     public void setResult(Object result) {
         RpcResponse response = (RpcResponse)result;
-        if (resultFuture.getRequestId().equals(response.getRequestId())){
+        boolean flag = resultFuture.getRequestId().equals(response.getRequestId());
+        log.info("RpcNettyConnection.setResult flag:{}, response:{}",flag,response);
+        if (flag){
             resultFuture.setResult(response);
         }
     }

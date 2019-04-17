@@ -2,6 +2,7 @@ package com.lovezcy.netty.rpc.netty;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
  * @author dingzhaolei
  * @date 2019/2/24 22:21
  **/
+@Slf4j
 public class InvokeFuture<T> {
     private Semaphore semaphore = new Semaphore(0);
     @Getter
@@ -32,7 +34,9 @@ public class InvokeFuture<T> {
         notifyListeners();
         synchronized (semaphore){
             if (!relase){
+                log.info("InvokeFuture.setResult availablePermits req:{}",semaphore.availablePermits());
                 semaphore.release(Integer.MAX_VALUE-semaphore.availablePermits());
+                log.info("InvokeFuture.setResult availablePermits res:{}",semaphore.availablePermits());
                 relase = true;
             }
         }
@@ -41,9 +45,11 @@ public class InvokeFuture<T> {
 
     public T getResult(long timeout, TimeUnit timeUnit){
         try{
-            if (semaphore.tryAcquire(timeout,timeUnit)){
+            log.info("InvokeFuture.getResult availablePermits req:{}",semaphore.availablePermits());
+            if (!semaphore.tryAcquire(timeout,timeUnit)){
                 throw new RuntimeException("获得凭证失败");
             }
+            log.info("InvokeFuture.getResult availablePermits res:{}",semaphore.availablePermits());
         }catch (InterruptedException e){
             throw new RuntimeException(e);
         }

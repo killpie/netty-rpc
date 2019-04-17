@@ -1,5 +1,6 @@
 package com.lovezcy.netty.rpc.api.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.lovezcy.netty.rpc.api.RpcProvider;
 import com.lovezcy.netty.rpc.netty.codec.RpcCodec;
 import com.lovezcy.netty.rpc.netty.codec.Spliter;
@@ -80,7 +81,9 @@ public class RpcProviderImpl extends RpcProvider {
      */
     public void publish(){
         //TODO 后期可以考虑使用zookeeper
+        log.info("RpcProviderImpl.publish className:{},classImpl:{}",interfaceClazz.getName(),classImpl);
         handlerMap.put(interfaceClazz.getName(),classImpl);
+        log.info("RpcProviderImpl.publish handlerMap:{}", handlerMap.get(interfaceClazz.getName()));
         EventLoopGroup bossGroup = new NioEventLoopGroup();
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
@@ -101,7 +104,7 @@ public class RpcProviderImpl extends RpcProvider {
                 .option(ChannelOption.SO_RCVBUF,2048);
 
         try{
-            ChannelFuture future = serverBootstrap.bind(8888).sync();
+            ChannelFuture future = serverBootstrap.bind(18888).sync();
             future.addListener(new GenericFutureListener<Future<? super Void>>() {
                 @Override
                 public void operationComplete(Future<? super Void> future) throws Exception {

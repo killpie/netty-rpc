@@ -10,6 +10,7 @@ import com.lovezcy.netty.rpc.netty.RpcConnection;
 import com.lovezcy.netty.rpc.netty.impl.RpcNettyConnection;
 import com.lovezcy.netty.rpc.tool.Tool;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -19,13 +20,13 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * rpc消费者实现类
  */
+@Slf4j
 public class RpcConsumerImpl extends RpcConsumer {
     private static AtomicLong callTimes = new AtomicLong(0);
     private RpcConnection connection;
     private List<RpcConnection> connectionList;
     private Map<String, ResponseCallbackListener> asyncMethods;
-    @Getter
-    private Class<?> interfaceCalss;
+    private Class<?> interfaceClazz;
 
     @Getter
     private String version;
@@ -53,9 +54,8 @@ public class RpcConsumerImpl extends RpcConsumer {
         return connectionList.get(d);
     }
 
-
     public RpcConsumerImpl(String host, int port){
-
+        init(host,port);
     }
 
     private void init(String host, int port){
@@ -78,18 +78,18 @@ public class RpcConsumerImpl extends RpcConsumer {
         }
     }
 
-    public <T> T proxy(Class<T> interfaceCalss) throws Exception{
-        if (!interfaceCalss.isInterface()){
-            throw new IllegalArgumentException("所需代理创建的类不能为接口");
+    public <T> T proxy(Class<T> interfaceClass) throws Exception{
+        if (!interfaceClass.isInterface()){
+            throw new IllegalArgumentException("所需代理创建的类应该是接口");
         }
 
-        return (T) Proxy.newProxyInstance(interfaceCalss.getClassLoader(),
-                new Class[]{interfaceCalss},this);
+        return (T) Proxy.newProxyInstance(interfaceClass.getClassLoader(),
+                new Class[]{interfaceClass},this);
     }
 
     @Override
     public RpcConsumer interfaceClass(Class<?> interfaceClass){
-        this.interfaceCalss = interfaceClass;
+        this.interfaceClazz = interfaceClass;
         return this;
     }
 
@@ -113,7 +113,7 @@ public class RpcConsumerImpl extends RpcConsumer {
 
     public Object instance(){
         try{
-            return proxy(this.interfaceCalss);
+            return proxy(this.interfaceClazz);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -152,6 +152,7 @@ public class RpcConsumerImpl extends RpcConsumer {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        log.info("RpcConsumerImpl invoke");
         RpcRequest request = new RpcRequest();
 
         request.setRequestId(UUID.randomUUID().toString());

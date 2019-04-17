@@ -16,7 +16,7 @@ import java.util.Calendar;
  **/
 public class RpcConsumer implements InvocationHandler {
 
-    private Class<?> interfacefaceClazz;
+    private Class<?> interfaceClazz;
 
     public RpcConsumer(){
     }
@@ -25,11 +25,11 @@ public class RpcConsumer implements InvocationHandler {
 
     /**
      *设置消费者想要使用的接口，它会调用一个远程服务来获得这个接口方法的结果
-     * @param interfacefaceClazz
+     * @param interfaceClazz
      * @return
      */
-    public RpcConsumer interfaceClass(Class<?> interfacefaceClazz){
-        this.interfacefaceClazz = interfacefaceClazz;
+    public RpcConsumer interfaceClass(Class<?> interfaceClazz){
+        this.interfaceClazz = interfaceClazz;
         return this;
     }
 
@@ -67,7 +67,7 @@ public class RpcConsumer implements InvocationHandler {
      * @return
      */
     public Object instance(){
-        Object object = Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class[]{this.interfacefaceClazz},this);
+        Object object = Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class[]{this.interfaceClazz},this);
         return object;
     }
 
@@ -93,12 +93,12 @@ public class RpcConsumer implements InvocationHandler {
         return null;
     }
 
-    public void setInterfacefaceClazz(Class<?> interfacefaceClazz){
-        this.interfacefaceClazz = interfacefaceClazz;
+    public void setInterfaceClazz(Class<?> interfaceClazz){
+        this.interfaceClazz = interfaceClazz;
     }
 
-    public Class<?> getInterfacefaceClazz(){
-        return interfacefaceClazz;
+    public Class<?> getInterfaceClazz(){
+        return interfaceClazz;
     }
 
 

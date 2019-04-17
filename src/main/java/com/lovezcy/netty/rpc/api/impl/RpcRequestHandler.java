@@ -1,5 +1,9 @@
 package com.lovezcy.netty.rpc.api.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.lovezcy.netty.rpc.context.RpcContext;
 import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
 import com.lovezcy.netty.rpc.model.protocol.RpcResponse;
@@ -28,19 +32,24 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
     private Map<String, FastMethod> methodMap=new ConcurrentHashMap<>();
 
     public RpcRequestHandler(Map<String ,Object> handlerMap){
+        log.info("RpcRequestHandler.RpcRequestHandler handlerMap:{}", handlerMap.values());
         this.handlerMap = handlerMap;
     }
 
+    @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.info("channelActive id:{}",ctx.channel().id());
+        log.info("RpcRequestHandler.channelActive id:{}",ctx.channel().id(),JSON.toJSON(handlerMap));
     }
 
+    @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.info("channelInactive id:{}",ctx.channel().id());
     }
 
+    @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         RpcRequest request = (RpcRequest)msg;
+        log.info("RpcRequestHandler.channelRead channelId:{},request:{}",ctx.channel().id(),request);
         String host = ctx.channel().remoteAddress().toString();
         updateRpcContext(host,request.getContext());
 
@@ -53,6 +62,7 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
         }catch (Throwable t){
             response.setException(Tool.serialize(t));
             response.setClazz(t.getClass());
+            t.printStackTrace();
         }
         ctx.writeAndFlush(response);
     }
