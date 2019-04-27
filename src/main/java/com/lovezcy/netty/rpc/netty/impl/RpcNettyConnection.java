@@ -112,42 +112,42 @@ public class RpcNettyConnection implements RpcConnection {
             throw new Exception("request must not be null");
         }
 
-        if (channel == null){
+        if (channel == null) {
             channel = channelMap.get(this.inetSocketAddress.toString());
-            if (channel!=null){
-                final InvokeFuture<Object> future = new InvokeFuture<>();
-                future.setMethod(request.getMethodName());
-                futureMap.put(request.getRequestId(),future);
+        }
+        if (channel!=null){
+            final InvokeFuture<Object> future = new InvokeFuture<>();
+            future.setMethod(request.getMethodName());
+            futureMap.put(request.getRequestId(),future);
 
-                ChannelFuture channelFuture = channel.writeAndFlush(request);
-                channelFuture.addListener(new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture cfuture) throws Exception {
-                        if (!cfuture.isSuccess()){
-                            future.setCause(cfuture.cause());
-                            cfuture.cause().printStackTrace();
-                        }
+            ChannelFuture channelFuture = channel.writeAndFlush(request);
+            channelFuture.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture cfuture) throws Exception {
+                    if (!cfuture.isSuccess()){
+                        future.setCause(cfuture.cause());
+                        cfuture.cause().printStackTrace();
                     }
-                });
-                resultFuture = new ResultFuture<>(timeOut);
-                resultFuture.setRequestId(request.getRequestId());
-                try {
-                    if (async){
-                        //异步直接返回
-                        ResponseFuture.setFuture(resultFuture);
-                        return null;
-                    }else {
-                        log.info("RpcNettyConnection.send timeOut:{}",timeOut);
-                        Object result = future.getResult(timeOut, TimeUnit.MILLISECONDS);
-                        return result;
-                    }
-                }catch (RuntimeException e){
-                    throw e;
-                }finally {
-                    if (!async){
-                        //非异步已收到结果
-                        futureMap.remove(request.getRequestId());
-                    }
+                }
+            });
+            resultFuture = new ResultFuture<>(timeOut);
+            resultFuture.setRequestId(request.getRequestId());
+            try {
+                if (async){
+                    //异步直接返回
+                    ResponseFuture.setFuture(resultFuture);
+                    return null;
+                }else {
+                    log.info("RpcNettyConnection.send timeOut:{}",timeOut);
+                    Object result = future.getResult(timeOut, TimeUnit.MILLISECONDS);
+                    return result;
+                }
+            }catch (RuntimeException e){
+                throw e;
+            }finally {
+                if (!async){
+                    //非异步已收到结果
+                    futureMap.remove(request.getRequestId());
                 }
             }
         }

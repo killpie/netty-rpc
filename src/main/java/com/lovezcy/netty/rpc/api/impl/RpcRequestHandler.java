@@ -1,9 +1,6 @@
 package com.lovezcy.netty.rpc.api.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.lovezcy.netty.rpc.context.RpcContext;
 import com.lovezcy.netty.rpc.model.protocol.RpcRequest;
 import com.lovezcy.netty.rpc.model.protocol.RpcResponse;
@@ -95,7 +92,7 @@ public class RpcRequestHandler extends ChannelInboundHandlerAdapter {
         if (methodValue == null){
             throw new RuntimeException("methodValue 不能为 null");
         }
-
+        log.info("RpcRequestHandler.handle requestId:{},methodValue:{}",request.getRequestId(),methodValue);
         return methodValue;
 
     }

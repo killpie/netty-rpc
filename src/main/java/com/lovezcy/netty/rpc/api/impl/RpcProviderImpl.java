@@ -104,7 +104,7 @@ public class RpcProviderImpl extends RpcProvider {
                 .option(ChannelOption.SO_RCVBUF,2048);
 
         try{
-            ChannelFuture future = serverBootstrap.bind(18888).sync();
+            ChannelFuture future = serverBootstrap.bind(18883).sync();
             future.addListener(new GenericFutureListener<Future<? super Void>>() {
                 @Override
                 public void operationComplete(Future<? super Void> future) throws Exception {

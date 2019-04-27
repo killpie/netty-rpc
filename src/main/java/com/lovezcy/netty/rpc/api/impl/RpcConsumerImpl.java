@@ -12,6 +12,7 @@ import com.lovezcy.netty.rpc.tool.Tool;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -42,13 +43,10 @@ public class RpcConsumerImpl extends RpcConsumer {
     RpcConnection select(){
         //TODO 考虑优化负载均衡算法
 
-        if (connectionList == null || connectionList.size() == 0){
-            throw new RuntimeException("rpc连接数目为0");
-        }
-
-        if (connectionList.size() == 1){
+        if (connectionList == null || connectionList.size() < 2){
             return connection;
         }
+
         int d = (int)(callTimes.getAndIncrement()%connectionList.size());
 
         return connectionList.get(d);
@@ -63,7 +61,7 @@ public class RpcConsumerImpl extends RpcConsumer {
         this.asyncMethods = new HashMap<>();
         this.connection.connect();
         connectionList = new ArrayList<>();
-        int num = Runtime.getRuntime().availableProcessors()-1;
+        int num = Runtime.getRuntime().availableProcessors()/3-2;
 
         for (int i = 0; i < num; i++) {
             RpcConnection rpcConnection = new RpcNettyConnection(host,port);
@@ -112,8 +110,11 @@ public class RpcConsumerImpl extends RpcConsumer {
     }
 
     public Object instance(){
+        Object object = null;
         try{
-            return proxy(this.interfaceClazz);
+            object = proxy(this.interfaceClazz);
+            log.info("RpcConsumerImpl.instance :{}",this.interfaceClazz.getName());
+            return object;
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -152,7 +153,6 @@ public class RpcConsumerImpl extends RpcConsumer {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        log.info("RpcConsumerImpl invoke");
         RpcRequest request = new RpcRequest();
 
         request.setRequestId(UUID.randomUUID().toString());

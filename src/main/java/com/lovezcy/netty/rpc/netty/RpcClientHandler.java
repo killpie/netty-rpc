@@ -93,19 +93,16 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter {
         if (future == null){
             return;
         }
-        log.info("RpcClientHandler 1");
         if (this.cause!=null){
             future.setCause(cause);
             future.setResult(cause);
             notifyListenerException(future.getMethod());
             cause.printStackTrace();
         }
-        log.info("RpcClientHandler 2");
         byte[] data = (byte[]) response.getAppResponse();
         if (data == null){
             return;
         }
-        log.info("RpcClientHandler 3");
         if (cacheName != null && cacheEqual(data,cacheName)){
             response.setAppResponse(cacheValue);
         }else {
@@ -114,7 +111,6 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter {
             response.setAppResponse(cacheValue0);
             cacheValue = cacheValue0;
         }
-        log.info("RpcClientHandler 4");
         future.setResult(response);
         this.connection.setResult(response);
         notifyListenerResponse(future.getMethod(),response.getAppResponse());

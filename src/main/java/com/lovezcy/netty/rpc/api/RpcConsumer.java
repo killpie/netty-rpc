@@ -2,22 +2,24 @@ package com.lovezcy.netty.rpc.api;
 
 import com.lovezcy.netty.rpc.aop.ConsumerHook;
 import com.lovezcy.netty.rpc.async.ResponseCallbackListener;
+import lombok.extern.slf4j.Slf4j;
 import sun.util.resources.cldr.ss.CalendarData_ss_SZ;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Calendar;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * 消费者
  * @author dingzhaolei
  * @date 2019/2/24 20:08
  **/
+@Slf4j
 public class RpcConsumer implements InvocationHandler {
 
     private Class<?> interfaceClazz;
-
     public RpcConsumer(){
     }
 
@@ -68,11 +70,13 @@ public class RpcConsumer implements InvocationHandler {
      */
     public Object instance(){
         Object object = Proxy.newProxyInstance(this.getClass().getClassLoader(),new Class[]{this.interfaceClazz},this);
+        log.info("RpcConsumer.instance :{}",object);
         return object;
     }
 
 
     public void aysnCall(String methodName){
+        aysnCall(methodName,null);
     }
 
     /**

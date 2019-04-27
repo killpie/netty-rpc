@@ -6,4 +6,9 @@ public class RaceTestServiceImpl implements RaceTestService {
     public int add(int i, int j){
         return i+j;
     }
+
+    @Override
+    public String getString(){
+        return "I am proxy";
+    }
 }
