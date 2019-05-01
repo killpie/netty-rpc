@@ -119,7 +119,10 @@ public class RpcNettyConnection implements RpcConnection {
             final InvokeFuture<Object> future = new InvokeFuture<>();
             future.setMethod(request.getMethodName());
             futureMap.put(request.getRequestId(),future);
-
+            if (!channel.isOpen()){
+                log.error("channel已关闭");
+                return null;
+            }
             ChannelFuture channelFuture = channel.writeAndFlush(request);
             channelFuture.addListener(new ChannelFutureListener() {
                 @Override

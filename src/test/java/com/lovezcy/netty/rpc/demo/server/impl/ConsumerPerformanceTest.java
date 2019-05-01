@@ -5,6 +5,8 @@ import com.lovezcy.netty.rpc.demo.util.ConsumerTestLog;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +20,7 @@ public class ConsumerPerformanceTest {
     private static Method method;
     private static ConsumerBuilder consumerBuilder;
     private static CountDownLatch latch;
-    final static int time = 100;
+    final static int time =1000;
     public static void main(String[] args) throws Exception{
         test();
     }
@@ -53,22 +55,27 @@ public class ConsumerPerformanceTest {
             });
 
             latch.countDown();
-            log.info("************latch.getCount():{}",latch.getCount());
         }
 
+        service.isShutdown();
         try{
-            latch.await(30, TimeUnit.SECONDS);
-            service.awaitTermination(3000,TimeUnit.MILLISECONDS);
+         //   latch.await(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
+            service.awaitTermination(Integer.MAX_VALUE,TimeUnit.NANOSECONDS);
         }catch (InterruptedException e){
             throw new RuntimeException(e);
         }
 
         long endTime = System.currentTimeMillis();
 
-        float qps = (endTime-startTime)/atomicInteger.get();
+        double temp = atomicInteger.get()/1.0;
+        double tps = temp/(endTime-startTime);
         try {
-            ConsumerTestLog.getPerformanceOutputStream().write(("qps:"+qps).getBytes());
-            ConsumerTestLog.getPerformanceOutputStream().close();
+            OutputStream f = ConsumerTestLog.getPerformanceOutputStream();
+            String d = "总耗时:"+(endTime-startTime)+"ms\n";
+            d = d+"并发量:"+atomicInteger.get()+"\n";
+            d = d+"TPS:"+tps*1000+" 单位每秒";
+            f.write((d.getBytes()));
+            f.flush();
         }catch (Exception e){
 
         }
